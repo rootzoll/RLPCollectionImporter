@@ -2,5 +2,15 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
+	<classpathentry kind="lib" path="/Users/rotzoll/Documents/MetaventisWorkspace/RLPCollectionImporter/target/lib/gson-2.6.2.jar"/>
+	<classpathentry kind="lib" path="/Users/rotzoll/Documents/MetaventisWorkspace/RLPCollectionImporter/target/lib/hamcrest-core-1.3.jar"/>
+	<classpathentry kind="lib" path="/Users/rotzoll/Documents/MetaventisWorkspace/RLPCollectionImporter/target/lib/joda-time-2.9.3.jar"/>
+	<classpathentry kind="lib" path="/Users/rotzoll/Documents/MetaventisWorkspace/RLPCollectionImporter/target/lib/junit-4.12.jar"/>
+	<classpathentry kind="lib" path="/Users/rotzoll/Documents/MetaventisWorkspace/RLPCollectionImporter/target/lib/logging-interceptor-2.7.5.jar"/>
+	<classpathentry kind="lib" path="/Users/rotzoll/Documents/MetaventisWorkspace/RLPCollectionImporter/target/lib/okhttp-2.7.5.jar"/>
+	<classpathentry kind="lib" path="/Users/rotzoll/Documents/MetaventisWorkspace/RLPCollectionImporter/target/lib/okio-1.6.0.jar"/>
+	<classpathentry kind="lib" path="/Users/rotzoll/Documents/MetaventisWorkspace/RLPCollectionImporter/target/lib/swagger-annotations-1.5.9.jar"/>
+	<classpathentry kind="lib" path="/Users/rotzoll/Documents/MetaventisWorkspace/RLPCollectionImporter/target/swagger-java-client-1.0.0-tests.jar"/>
+	<classpathentry kind="lib" path="/Users/rotzoll/Documents/MetaventisWorkspace/RLPCollectionImporter/target/swagger-java-client-1.0.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
