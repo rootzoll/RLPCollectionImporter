@@ -39,11 +39,11 @@ public class RLPCollectionImporter {
         
         for (Fachtype fach : rlp.getC().getFach()) {
         	
-        	NodeRef fachCollectionRef = createCollection(null, fach.getTitle(), fach.getId());
+        	NodeRef fachCollectionRef = createCollection(null, fach.getTitle(), fach.getId(), "Fach");
         	
         	for (Competenceareatype area : fach.getC2().getArea()) {
         		
-        		NodeRef areaCollectionRef = createCollection(fachCollectionRef, area.getName(), area.getId());
+        		NodeRef areaCollectionRef = createCollection(fachCollectionRef, area.getName(), area.getId(), "Kompetenzbereich");
         		
         		// create direct competences if available
         		processCompetences(areaCollectionRef, area.getCompetence());
@@ -51,7 +51,7 @@ public class RLPCollectionImporter {
         		// go into sub areas if available
             	if (area.getSubarea()!=null) for (Competenceareatype subarea : area.getSubarea()) {
             		
-            		NodeRef subAreaCollectionRef = createCollection(areaCollectionRef, subarea.getName(), subarea.getId());
+            		NodeRef subAreaCollectionRef = createCollection(areaCollectionRef, subarea.getName(), subarea.getId(), "Unterkompetenzbereich");
             		
             		// create sub area competences if available
             		processCompetences(subAreaCollectionRef, subarea.getCompetence());
@@ -84,8 +84,11 @@ public class RLPCollectionImporter {
 		}
 	}
 	
-	private static NodeRef createCollection(NodeRef parentRef, String name, String id) {
-		System.out.println("COLLECTION id("+id+") '"+name+"'"); 
+	private static NodeRef createCollection(NodeRef parentRef, String name, String id, String desc) {
+		if (desc==null) desc = "";
+		System.out.println("*******************************");
+		System.out.println("COLLECTION '"+name+"'"); 
+		System.out.println("("+id+") '"+desc+"'"); 
 		return null;
 	}
 	
@@ -95,15 +98,17 @@ public class RLPCollectionImporter {
 			
 			for (Competencetype competence : list) {
 				
-				NodeRef competenceCollectionRef = createCollection(parent, competence.getName(), competence.getId());
+				NodeRef competenceCollectionRef = createCollection(parent, competence.getName(), competence.getId(), "Kompetenz");
 				
 				for (Stufentype stufe : competence.getStufe()) {
 					
-					NodeRef stufenCollectionRef = createCollection(competenceCollectionRef, stufe.getLevel(), stufe.getId());
+					NodeRef stufenCollectionRef = createCollection(competenceCollectionRef, stufe.getLevel(), stufe.getId(), "Kompetenzstufe");
 					
+					int number = 0;
 					for (Standardtype standard : stufe.getStandard()) {
 						
-						createCollection(stufenCollectionRef, standard.getContent(), standard.getId());
+						number++;
+						createCollection(stufenCollectionRef, "Standard "+number, standard.getId(), standard.getContent());
 						
 					}
 					
