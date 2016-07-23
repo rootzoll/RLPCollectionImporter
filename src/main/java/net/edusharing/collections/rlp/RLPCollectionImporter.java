@@ -15,6 +15,7 @@ import io.swagger.client.Configuration;
 import io.swagger.client.api.COLLECTIONVApi;
 import io.swagger.client.model.Collection;
 import io.swagger.client.model.CollectionEntries;
+import io.swagger.client.model.CollectionEntry;
 import io.swagger.client.model.NodeRef;
 import net.edusharing.collections.rlp.xml.Competenceareatype;
 import net.edusharing.collections.rlp.xml.Competencetype;
@@ -25,7 +26,23 @@ import net.edusharing.collections.rlp.xml.Stufentype;
 
 public class RLPCollectionImporter {
 
+	static ApiClient apiClient;
+	
 	public static void main(String[] args) throws Exception {
+		
+		/*
+		 * Init API client
+		 */
+		
+		apiClient = Configuration.getDefaultApiClient();
+		apiClient.setPassword("admin");
+		apiClient.setUsername("admin");
+		apiClient.setBasePath("http://repo1.edu-sharing.net:7111/edu-sharing/rest");
+		
+	
+		/*
+		 * load xml data
+		 */
 		
 	    JAXBContext jc = JAXBContext.newInstance(Rlp110Type.class);
 
@@ -37,9 +54,12 @@ public class RLPCollectionImporter {
          * tranverse curriculum and create collections with sub collections  	
          */
         
+        
+        NodeRef lehrplanCollectionRef = createCollection(null, "Lehrplan BB", null, "Lehrplan Berlin-Brandenburg");
+        
         for (Fachtype fach : rlp.getC().getFach()) {
         	
-        	NodeRef fachCollectionRef = createCollection(null, fach.getTitle(), fach.getId(), "Fach");
+        	NodeRef fachCollectionRef = createCollection(lehrplanCollectionRef, fach.getTitle(), fach.getId(), "Fach");
         	
         	for (Competenceareatype area : fach.getC2().getArea()) {
         		
@@ -60,36 +80,44 @@ public class RLPCollectionImporter {
             		
             }
         	
-		}
-        
-		/*
-		 *  connection to edu-sharing
-		 */
-		
-		try{
-			ApiClient apiClient = Configuration.getDefaultApiClient();
-			apiClient.setPassword("admin");
-			apiClient.setUsername("admin");
-			apiClient.setBasePath("http://repo1.edu-sharing.net:7111/edu-sharing/rest");
-			
-			CollectionEntries collections = new COLLECTIONVApi(apiClient).getCollections("-home-", "-root-", "EDU_ALL");
+		}		
 
-			Iterator<Collection> intItr = collections.getCollections().iterator();
-			while(intItr.hasNext())  {
-			   System.out.println("root collection in edu-sharing: " + intItr.next().getTitle());
-			}
-			
-		}catch(ApiException e){
-			e.printStackTrace();
-		}
 	}
 	
 	private static NodeRef createCollection(NodeRef parentRef, String name, String id, String desc) {
-		if (desc==null) desc = "";
-		System.out.println("*******************************");
-		System.out.println("COLLECTION '"+name+"'"); 
-		System.out.println("("+id+") '"+desc+"'"); 
-		return null;
+
+		// create full description
+		String description = "";
+		if (id!=null) description += "("+id+") ";
+		if (desc!=null) description += desc;
+		
+		// set data on collection
+		Collection col = new Collection();
+		col.setTitle(name);
+		col.setDescription(description);
+		
+		// try to create collection
+		try{
+			
+			String repo = "-home-";
+			String nodeId = "-root-";
+			
+			if (parentRef!=null) nodeId = parentRef.getId();
+			
+			CollectionEntry entry = new COLLECTIONVApi(apiClient).createCollection(repo, nodeId ,col);
+
+			System.out.println("**** created *******************************");
+			System.out.println("COLLECTION '"+name+"'"); 
+			System.out.println(description); 
+			
+			return entry.getCollection().getRef();
+			
+		}catch(ApiException e){
+			e.printStackTrace();
+			System.exit(-1);
+			return null;
+		}
+		
 	}
 	
 	private static void processCompetences(NodeRef parent, List<Competencetype> list) {
