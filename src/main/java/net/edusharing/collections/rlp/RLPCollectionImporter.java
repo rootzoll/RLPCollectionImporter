@@ -2,11 +2,9 @@ package net.edusharing.collections.rlp;
 
 import java.awt.geom.Area;
 import java.io.File;
-import java.util.Iterator;
 import java.util.List;
 
 import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 
 import io.swagger.client.ApiClient;
@@ -14,7 +12,6 @@ import io.swagger.client.ApiException;
 import io.swagger.client.Configuration;
 import io.swagger.client.api.COLLECTIONVApi;
 import io.swagger.client.model.Collection;
-import io.swagger.client.model.CollectionEntries;
 import io.swagger.client.model.CollectionEntry;
 import io.swagger.client.model.NodeRef;
 import net.edusharing.collections.rlp.xml.Competenceareatype;
@@ -54,16 +51,17 @@ public class RLPCollectionImporter {
          * tranverse curriculum and create collections with sub collections  	
          */
         
-        
-        NodeRef lehrplanCollectionRef = createCollection(null, "Lehrplan BB", null, "Lehrplan Berlin-Brandenburg");
+        NodeRef lehrplanCollectionRef = createCollection(null, "Lehrplan Berlin-Brandenburg", null, "Hackathon Prototype by Henry Freye and Christian Rotzoll");
         
         for (Fachtype fach : rlp.getC().getFach()) {
         	
         	NodeRef fachCollectionRef = createCollection(lehrplanCollectionRef, fach.getTitle(), fach.getId(), "Fach");
+			if (fachCollectionRef==null) continue;
         	
         	for (Competenceareatype area : fach.getC2().getArea()) {
         		
         		NodeRef areaCollectionRef = createCollection(fachCollectionRef, area.getName(), area.getId(), "Kompetenzbereich");
+				if (areaCollectionRef==null) continue;
         		
         		// create direct competences if available
         		processCompetences(areaCollectionRef, area.getCompetence());
@@ -72,6 +70,7 @@ public class RLPCollectionImporter {
             	if (area.getSubarea()!=null) for (Competenceareatype subarea : area.getSubarea()) {
             		
             		NodeRef subAreaCollectionRef = createCollection(areaCollectionRef, subarea.getName(), subarea.getId(), "Unterkompetenzbereich");
+    				if (subAreaCollectionRef==null) continue;
             		
             		// create sub area competences if available
             		processCompetences(subAreaCollectionRef, subarea.getCompetence());
@@ -86,6 +85,9 @@ public class RLPCollectionImporter {
 	
 	private static NodeRef createCollection(NodeRef parentRef, String name, String id, String desc) {
 
+		// if a name is not set - dont make an extra collection
+		if ((name==null) || (name.trim().length()==0)) return parentRef;
+				
 		// create full description
 		String description = "";
 		if (id!=null) description += "("+id+") ";
@@ -103,18 +105,17 @@ public class RLPCollectionImporter {
 			String nodeId = "-root-";
 			
 			if (parentRef!=null) nodeId = parentRef.getId();
-			
-			CollectionEntry entry = new COLLECTIONVApi(apiClient).createCollection(repo, nodeId ,col);
 
 			System.out.println("**** created *******************************");
 			System.out.println("COLLECTION '"+name+"'"); 
 			System.out.println(description); 
 			
+			CollectionEntry entry = new COLLECTIONVApi(apiClient).createCollection(repo, nodeId ,col);
+			
 			return entry.getCollection().getRef();
 			
 		}catch(ApiException e){
 			e.printStackTrace();
-			System.exit(-1);
 			return null;
 		}
 		
@@ -126,17 +127,19 @@ public class RLPCollectionImporter {
 			
 			for (Competencetype competence : list) {
 				
-				NodeRef competenceCollectionRef = createCollection(parent, competence.getName(), competence.getId(), "Kompetenz");
+				NodeRef competenceCollectionRef =  createCollection(parent, competence.getName(), competence.getId(), "Kompetenz");
+				if (competenceCollectionRef==null) continue;
 				
 				for (Stufentype stufe : competence.getStufe()) {
 					
 					NodeRef stufenCollectionRef = createCollection(competenceCollectionRef, stufe.getLevel(), stufe.getId(), "Kompetenzstufe");
+					if (stufenCollectionRef==null) continue;
 					
 					int number = 0;
 					for (Standardtype standard : stufe.getStandard()) {
 						
 						number++;
-						createCollection(stufenCollectionRef, "Standard "+number, standard.getId(), standard.getContent());
+						if (createCollection(stufenCollectionRef, "Standard "+number, standard.getId(), standard.getContent()) == null) continue;
 						
 					}
 					
