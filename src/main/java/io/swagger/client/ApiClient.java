@@ -170,9 +170,10 @@ public class ApiClient {
 
         // Set default User-Agent.
         setUserAgent("Swagger-Codegen/1.0.0/java");
-
+        
         // Setup authentications (key: authentication name, value: authentication).
         authentications = new HashMap<String, Authentication>();
+        authentications.put("Basic", new HttpBasicAuth());
         // Prevent the authentications from being modified.
         authentications = Collections.unmodifiableMap(authentications);
     }
@@ -1074,7 +1075,11 @@ public class ApiClient {
      * @throws ApiException If fail to serialize the request body object
      */
     public Call buildCall(String path, String method, List<Pair> queryParams, Object body, Map<String, String> headerParams, Map<String, Object> formParams, String[] authNames, ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
-        updateParamsForAuth(authNames, queryParams, headerParams);
+        
+    	headerParams.put("Accept", "application/json");
+        authNames = new String[]{"Basic"};
+    	
+    	updateParamsForAuth(authNames, queryParams, headerParams);
 
         final String url = buildUrl(path, queryParams);
         final Request.Builder reqBuilder = new Request.Builder().url(url);

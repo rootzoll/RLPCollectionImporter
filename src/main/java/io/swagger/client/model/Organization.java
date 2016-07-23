@@ -36,7 +36,7 @@ import io.swagger.client.model.NodeRef;
 /**
  * Organization
  */
-@javax.annotation.Generated(value = "class io.swagger.codegen.languages.JavaClientCodegen", date = "2016-07-23T18:46:07.581+02:00")
+@javax.annotation.Generated(value = "class io.swagger.codegen.languages.JavaClientCodegen", date = "2016-07-23T19:08:31.348+02:00")
 public class Organization   {
   @SerializedName("authorityName")
   private String authorityName = null;
