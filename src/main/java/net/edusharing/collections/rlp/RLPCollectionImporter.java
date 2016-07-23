@@ -1,7 +1,9 @@
 package net.edusharing.collections.rlp;
 
+import java.awt.geom.Area;
 import java.io.File;
 import java.util.Iterator;
+import java.util.List;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Marshaller;
@@ -13,7 +15,13 @@ import io.swagger.client.Configuration;
 import io.swagger.client.api.COLLECTIONVApi;
 import io.swagger.client.model.Collection;
 import io.swagger.client.model.CollectionEntries;
+import io.swagger.client.model.NodeRef;
+import net.edusharing.collections.rlp.xml.Competenceareatype;
+import net.edusharing.collections.rlp.xml.Competencetype;
+import net.edusharing.collections.rlp.xml.Fachtype;
 import net.edusharing.collections.rlp.xml.Rlp110Type;
+import net.edusharing.collections.rlp.xml.Standardtype;
+import net.edusharing.collections.rlp.xml.Stufentype;
 
 public class RLPCollectionImporter {
 
@@ -24,14 +32,36 @@ public class RLPCollectionImporter {
         Unmarshaller unmarshaller = jc.createUnmarshaller();
         Rlp110Type rlp = (Rlp110Type) unmarshaller.unmarshal(new File("src/main/java/net/edusharing/collections/rlp/rlp110.xml"));
 
+
         /*
-        Marshaller marshaller = jc.createMarshaller();
-        marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-        marshaller.marshal(rlp, System.out);
-        */
+         * tranverse curriculum and create collections with sub collections  	
+         */
         
-        System.out.println(rlp.getA().getKapitel().get(0).getId());
-		
+        for (Fachtype fach : rlp.getC().getFach()) {
+        	
+        	NodeRef fachCollectionRef = createCollection(null, fach.getTitle(), fach.getId());
+        	
+        	for (Competenceareatype area : fach.getC2().getArea()) {
+        		
+        		NodeRef areaCollectionRef = createCollection(fachCollectionRef, area.getName(), area.getId());
+        		
+        		// create direct competences if available
+        		processCompetences(areaCollectionRef, area.getCompetence());
+        		
+        		// go into sub areas if available
+            	if (area.getSubarea()!=null) for (Competenceareatype subarea : area.getSubarea()) {
+            		
+            		NodeRef subAreaCollectionRef = createCollection(areaCollectionRef, subarea.getName(), subarea.getId());
+            		
+            		// create sub area competences if available
+            		processCompetences(subAreaCollectionRef, subarea.getCompetence());
+            		
+            	}
+            		
+            }
+        	
+		}
+        
 		/*
 		 *  connection to edu-sharing
 		 */
@@ -52,6 +82,37 @@ public class RLPCollectionImporter {
 		}catch(ApiException e){
 			e.printStackTrace();
 		}
+	}
+	
+	private static NodeRef createCollection(NodeRef parentRef, String name, String id) {
+		System.out.println("COLLECTION id("+id+") '"+name+"'"); 
+		return null;
+	}
+	
+	private static void processCompetences(NodeRef parent, List<Competencetype> list) {
+		
+		if ((list!=null) && (list.size()>0)) {
+			
+			for (Competencetype competence : list) {
+				
+				NodeRef competenceCollectionRef = createCollection(parent, competence.getName(), competence.getId());
+				
+				for (Stufentype stufe : competence.getStufe()) {
+					
+					NodeRef stufenCollectionRef = createCollection(competenceCollectionRef, stufe.getLevel(), stufe.getId());
+					
+					for (Standardtype standard : stufe.getStandard()) {
+						
+						createCollection(stufenCollectionRef, standard.getContent(), standard.getId());
+						
+					}
+					
+				}
+				
+			}
+			
+		}
+	
 	}
 
 }
