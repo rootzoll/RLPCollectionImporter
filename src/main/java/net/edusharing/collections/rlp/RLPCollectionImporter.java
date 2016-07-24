@@ -34,7 +34,7 @@ public class RLPCollectionImporter {
 		apiClient = Configuration.getDefaultApiClient();
 		apiClient.setPassword("admin");
 		apiClient.setUsername("admin");
-		apiClient.setBasePath("http://repo1.edu-sharing.net:7111/edu-sharing/rest");
+		apiClient.setBasePath("http://repo1.edu-sharing.net:7109/edu-sharing/rest");
 		
 	
 		/*
@@ -102,6 +102,11 @@ public class RLPCollectionImporter {
 		// try to create collection
 		try{
 			
+			// courtesy delay
+			try {
+				Thread.sleep(250);
+			} catch (Exception e) {}
+			
 			String repo = "-home-";
 			String nodeId = "-root-";
 			
@@ -158,28 +163,28 @@ public class RLPCollectionImporter {
      */
     private static String getDescription (String level){
     	String descr = "";
-    	if (descr.contains("A")){ 
+    	if (level.contains("A")){ 
     		descr += "Die Niveaustufe A orientiert sich an einem Niveau, das Schülerinnen und Schüler im Allgemeinen am Ende der Jahrgangsstufe 1 erreichen. ";
     	}
-    	if (descr.contains("B")){ 
+    	if (level.contains("B")){ 
     		descr += "Die Niveaustufe B orientiert sich an einem Niveau, das Schülerinnen und Schüler im Allgemeinen am Ende der Schuleingansphase erreichen. ";
     	}
-    	if (descr.contains("C")){ 
+    	if (level.contains("C")){ 
     		descr += "Die Niveaustufe C orientiert sich an einem Niveau, das Schülerinnen und Schüler im Allgemeinen am Ende der Jahrgangsstufe 4 erreichen. ";
     	}
-    	if (descr.contains("D")){ 
+    	if (level.contains("D")){ 
     		descr += "Die Niveaustufe D orientiert sich an einem Niveau, das Schülerinnen und Schüler im Allgemeinen am Ende der Jahrgangsstufe 6 erreichen. ";
     	}
-    	if (descr.contains("E")){ 
+    	if (level.contains("E")){ 
     		descr += "Die Niveaustufe E orientiert sich an einem Niveau, das Schülerinnen und Schüler im Allgemeinen am Ende der Jahrgangsstufe 8 erreichen. ";
     	}
-    	if (descr.contains("F")){ 
+    	if (level.contains("F")){ 
     		descr += "Die Niveaustufe F orientiert sich an einem Niveau, das Schülerinnen und Schüler im Allgemeinen am Ende der Jahrgangsstufe 9 erreichen. (Entsprechend KMK-Standards für Hauptschulabschluss) ";
     	}
-    	if (descr.contains("G")){ 
+    	if (level.contains("G")){ 
     		descr += "Die Niveaustufe G orientiert sich an einem Niveau, das Schülerinnen und Schüler im Allgemeinen am Ende der Jahrgangsstufe 10 erreichen. (Entsprechend KMK-Standards für den MSA) ";
     	}
-    	if (descr.contains("H")){ 
+    	if (level.contains("H")){ 
     		descr += "Die Niveaustufe H orientiert sich an einem Niveau orientieren, das Schülerinnen und Schüler am Gymnasium im Allgemeinen am Ende der Jahrgangsstufe 10 erreichen. (orientiert sich an den Eingangsvoraussetzungen der Rahmenlehrpläne für die gymnasiale Oberstufe) ";
     	}
     	return descr;   	
