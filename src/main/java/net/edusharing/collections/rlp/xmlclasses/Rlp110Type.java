@@ -6,7 +6,7 @@
 //
 
 
-package net.edusharing.collections.rlp.xml;
+package net.edusharing.collections.rlp.xmlclasses;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;

@@ -6,7 +6,7 @@
 //
 
 
-package net.edusharing.collections.rlp.xml;
+package net.edusharing.collections.rlp.xmlclasses;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,19 +17,21 @@ import javax.xml.bind.annotation.XmlType;
 
 
 /**
- * <p>Java class for c3type complex type.
+ * <p>Java class for btype complex type.
  * 
  * <p>The following schema fragment specifies the expected content contained within this class.
  * 
  * <pre>
- * &lt;complexType name="c3type">
+ * &lt;complexType name="btype">
  *   &lt;complexContent>
  *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
  *       &lt;sequence>
  *         &lt;element name="id" type="{http://bsbb.eu}stringtype"/>
  *         &lt;element name="title" type="{http://bsbb.eu}stringtype"/>
- *         &lt;element name="vortext" type="{http://bsbb.eu}textcontent"/>
- *         &lt;element name="themainhalt" type="{http://bsbb.eu}themainhalttype" maxOccurs="30"/>
+ *         &lt;element name="einleitung" type="{http://bsbb.eu}textcontent"/>
+ *         &lt;element name="bcs" type="{http://bsbb.eu}bctype"/>
+ *         &lt;element name="bcm" type="{http://bsbb.eu}bctype"/>
+ *         &lt;element name="ueber" type="{http://bsbb.eu}textcontent" maxOccurs="15"/>
  *       &lt;/sequence>
  *     &lt;/restriction>
  *   &lt;/complexContent>
@@ -39,22 +41,28 @@ import javax.xml.bind.annotation.XmlType;
  * 
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "c3type", propOrder = {
+@XmlType(name = "btype", propOrder = {
     "id",
     "title",
-    "vortext",
-    "themainhalt"
+    "einleitung",
+    "bcs",
+    "bcm",
+    "ueber"
 })
-public class C3Type {
+public class Btype {
 
     @XmlElement(required = true)
     protected String id;
     @XmlElement(required = true)
     protected String title;
     @XmlElement(required = true)
-    protected Textcontent vortext;
+    protected Textcontent einleitung;
     @XmlElement(required = true)
-    protected List<Themainhalttype> themainhalt;
+    protected Bctype bcs;
+    @XmlElement(required = true)
+    protected Bctype bcm;
+    @XmlElement(required = true)
+    protected List<Textcontent> ueber;
 
     /**
      * Gets the value of the id property.
@@ -105,56 +113,104 @@ public class C3Type {
     }
 
     /**
-     * Gets the value of the vortext property.
+     * Gets the value of the einleitung property.
      * 
      * @return
      *     possible object is
      *     {@link Textcontent }
      *     
      */
-    public Textcontent getVortext() {
-        return vortext;
+    public Textcontent getEinleitung() {
+        return einleitung;
     }
 
     /**
-     * Sets the value of the vortext property.
+     * Sets the value of the einleitung property.
      * 
      * @param value
      *     allowed object is
      *     {@link Textcontent }
      *     
      */
-    public void setVortext(Textcontent value) {
-        this.vortext = value;
+    public void setEinleitung(Textcontent value) {
+        this.einleitung = value;
     }
 
     /**
-     * Gets the value of the themainhalt property.
+     * Gets the value of the bcs property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link Bctype }
+     *     
+     */
+    public Bctype getBcs() {
+        return bcs;
+    }
+
+    /**
+     * Sets the value of the bcs property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link Bctype }
+     *     
+     */
+    public void setBcs(Bctype value) {
+        this.bcs = value;
+    }
+
+    /**
+     * Gets the value of the bcm property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link Bctype }
+     *     
+     */
+    public Bctype getBcm() {
+        return bcm;
+    }
+
+    /**
+     * Sets the value of the bcm property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link Bctype }
+     *     
+     */
+    public void setBcm(Bctype value) {
+        this.bcm = value;
+    }
+
+    /**
+     * Gets the value of the ueber property.
      * 
      * <p>
      * This accessor method returns a reference to the live list,
      * not a snapshot. Therefore any modification you make to the
      * returned list will be present inside the JAXB object.
-     * This is why there is not a <CODE>set</CODE> method for the themainhalt property.
+     * This is why there is not a <CODE>set</CODE> method for the ueber property.
      * 
      * <p>
      * For example, to add a new item, do as follows:
      * <pre>
-     *    getThemainhalt().add(newItem);
+     *    getUeber().add(newItem);
      * </pre>
      * 
      * 
      * <p>
      * Objects of the following type(s) are allowed in the list
-     * {@link Themainhalttype }
+     * {@link Textcontent }
      * 
      * 
      */
-    public List<Themainhalttype> getThemainhalt() {
-        if (themainhalt == null) {
-            themainhalt = new ArrayList<Themainhalttype>();
+    public List<Textcontent> getUeber() {
+        if (ueber == null) {
+            ueber = new ArrayList<Textcontent>();
         }
-        return this.themainhalt;
+        return this.ueber;
     }
 
 }

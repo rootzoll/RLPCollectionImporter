@@ -6,7 +6,7 @@
 //
 
 
-package net.edusharing.collections.rlp.xml;
+package net.edusharing.collections.rlp.xmlclasses;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -15,20 +15,20 @@ import javax.xml.bind.annotation.XmlType;
 
 
 /**
- * <p>Java class for fachtype complex type.
+ * <p>Java class for bctype complex type.
  * 
  * <p>The following schema fragment specifies the expected content contained within this class.
  * 
  * <pre>
- * &lt;complexType name="fachtype">
+ * &lt;complexType name="bctype">
  *   &lt;complexContent>
  *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
  *       &lt;sequence>
  *         &lt;element name="id" type="{http://bsbb.eu}stringtype"/>
  *         &lt;element name="title" type="{http://bsbb.eu}stringtype"/>
- *         &lt;element name="c1" type="{http://bsbb.eu}textcontent"/>
- *         &lt;element name="c2" type="{http://bsbb.eu}c2type"/>
- *         &lt;element name="c3" type="{http://bsbb.eu}c3type"/>
+ *         &lt;element name="bc1" type="{http://bsbb.eu}textcontent"/>
+ *         &lt;element name="bc2" type="{http://bsbb.eu}textcontent"/>
+ *         &lt;element name="bc3" type="{http://bsbb.eu}c2type"/>
  *       &lt;/sequence>
  *     &lt;/restriction>
  *   &lt;/complexContent>
@@ -38,25 +38,25 @@ import javax.xml.bind.annotation.XmlType;
  * 
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "fachtype", propOrder = {
+@XmlType(name = "bctype", propOrder = {
     "id",
     "title",
-    "c1",
-    "c2",
-    "c3"
+    "bc1",
+    "bc2",
+    "bc3"
 })
-public class Fachtype {
+public class Bctype {
 
     @XmlElement(required = true)
     protected String id;
     @XmlElement(required = true)
     protected String title;
     @XmlElement(required = true)
-    protected Textcontent c1;
+    protected Textcontent bc1;
     @XmlElement(required = true)
-    protected C2Type c2;
+    protected Textcontent bc2;
     @XmlElement(required = true)
-    protected C3Type c3;
+    protected C2Type bc3;
 
     /**
      * Gets the value of the id property.
@@ -107,75 +107,75 @@ public class Fachtype {
     }
 
     /**
-     * Gets the value of the c1 property.
+     * Gets the value of the bc1 property.
      * 
      * @return
      *     possible object is
      *     {@link Textcontent }
      *     
      */
-    public Textcontent getC1() {
-        return c1;
+    public Textcontent getBc1() {
+        return bc1;
     }
 
     /**
-     * Sets the value of the c1 property.
+     * Sets the value of the bc1 property.
      * 
      * @param value
      *     allowed object is
      *     {@link Textcontent }
      *     
      */
-    public void setC1(Textcontent value) {
-        this.c1 = value;
+    public void setBc1(Textcontent value) {
+        this.bc1 = value;
     }
 
     /**
-     * Gets the value of the c2 property.
+     * Gets the value of the bc2 property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link Textcontent }
+     *     
+     */
+    public Textcontent getBc2() {
+        return bc2;
+    }
+
+    /**
+     * Sets the value of the bc2 property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link Textcontent }
+     *     
+     */
+    public void setBc2(Textcontent value) {
+        this.bc2 = value;
+    }
+
+    /**
+     * Gets the value of the bc3 property.
      * 
      * @return
      *     possible object is
      *     {@link C2Type }
      *     
      */
-    public C2Type getC2() {
-        return c2;
+    public C2Type getBc3() {
+        return bc3;
     }
 
     /**
-     * Sets the value of the c2 property.
+     * Sets the value of the bc3 property.
      * 
      * @param value
      *     allowed object is
      *     {@link C2Type }
      *     
      */
-    public void setC2(C2Type value) {
-        this.c2 = value;
-    }
-
-    /**
-     * Gets the value of the c3 property.
-     * 
-     * @return
-     *     possible object is
-     *     {@link C3Type }
-     *     
-     */
-    public C3Type getC3() {
-        return c3;
-    }
-
-    /**
-     * Sets the value of the c3 property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link C3Type }
-     *     
-     */
-    public void setC3(C3Type value) {
-        this.c3 = value;
+    public void setBc3(C2Type value) {
+        this.bc3 = value;
     }
 
 }

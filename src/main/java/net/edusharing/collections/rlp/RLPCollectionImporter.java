@@ -1,8 +1,8 @@
 package net.edusharing.collections.rlp;
 
-import java.awt.geom.Area;
 import java.io.File;
 import java.util.List;
+import java.util.Vector;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
@@ -14,47 +14,131 @@ import io.swagger.client.api.COLLECTIONVApi;
 import io.swagger.client.model.Collection;
 import io.swagger.client.model.CollectionEntry;
 import io.swagger.client.model.NodeRef;
-import net.edusharing.collections.rlp.xml.Competenceareatype;
-import net.edusharing.collections.rlp.xml.Competencetype;
-import net.edusharing.collections.rlp.xml.Fachtype;
-import net.edusharing.collections.rlp.xml.Rlp110Type;
-import net.edusharing.collections.rlp.xml.Standardtype;
-import net.edusharing.collections.rlp.xml.Stufentype;
+import net.edusharing.collections.rlp.xmlclasses.Competenceareatype;
+import net.edusharing.collections.rlp.xmlclasses.Competencetype;
+import net.edusharing.collections.rlp.xmlclasses.Fachtype;
+import net.edusharing.collections.rlp.xmlclasses.Standardtype;
+import net.edusharing.collections.rlp.xmlclasses.Stufentype;
+import net.edusharing.collections.rlp.xmlclasses.Textcontent;
+import net.edusharing.collections.rlp.xmlclasses.Themainhalttype;
 
 public class RLPCollectionImporter {
 
 	static ApiClient apiClient;
 	
+	@SuppressWarnings("unused")
 	public static void main(String[] args) throws Exception {
+		
+		/*
+		 * Configuration
+		 */
+		
+		// the file path where the XML data of the RLP is
+		final String basePathDataXML = "src/main/java/net/edusharing/collections/rlp/xmldata2/";
+		
+		// the URL of the edu-sharing repository where to import the data
+		
+		/*
+		final String username = "admin";
+		final String password = "admin";
+		final String eduSharingApiURL = "http://alfresco5.vm:8080/edu-sharing/rest";
+		final String lehrplanCollectionId = null; 
+		*/
+
+		final String username = "admin";
+		final String password = "admin";
+		final String eduSharingApiURL = "http://appserver7.metaventis.com:7117/edu-sharing/rest";
+		final String lehrplanCollectionId = "ab7332e7-c273-4674-a067-189469943889"; 
+		
 		
 		/*
 		 * Init API client
 		 */
 		
 		apiClient = Configuration.getDefaultApiClient();
-		apiClient.setPassword("admin");
-		apiClient.setUsername("admin");
-		apiClient.setBasePath("http://repo1.edu-sharing.net:7109/edu-sharing/rest");
+		apiClient.setPassword(password);
+		apiClient.setUsername(username);
+		apiClient.setBasePath(eduSharingApiURL);
 		
-	
 		/*
 		 * load xml data
+		 * Get all the single "fach" XML files from directory
 		 */
-		
-	    JAXBContext jc = JAXBContext.newInstance(Rlp110Type.class);
-
+        
+        // check if folder exists and is valid
+        File xmlFolder = new File(basePathDataXML);
+        if ((!xmlFolder.exists())) {
+        	System.err.println("FAIL - The path '"+basePathDataXML+"' to find XML data does not exist. EXIT");
+        	System.exit(-1);
+        }
+        if (!xmlFolder.isDirectory()) {
+        	System.err.println("FAIL - The path '"+basePathDataXML+"' to find XML is no directory. EXIT");
+        	System.exit(-1);	
+        }
+        
+        // get all XML files from folder
+        System.out.println("**** Chech Data Directory *****");
+        File[] directoryFiles = xmlFolder.listFiles();
+        Vector<File> xmlFiles = new Vector<File>();
+        for (int i=0; i<directoryFiles.length; i++) {
+        	File file = directoryFiles[i];
+        	System.out.print("Found File: "+file.getName());
+        	if (file.getName().toLowerCase().endsWith(".xml")) {
+        		xmlFiles.add(file);
+            	System.out.println(" YES XML --> MARK FOR PROCESSING");		
+        	} else {
+            	System.out.println(" NO XML --> IGNORE");	
+        	}
+        }
+        
+        // check if any results
+        if (xmlFiles.size()==0) {
+        	System.err.println("FAIL - In path '"+basePathDataXML+"' no XML files found. EXIT");
+        	System.exit(-1);	
+        }
+        
+        // check which XML files are from type "Fach"
+        System.out.println("**** XML Conversion *****");
+	    JAXBContext jc = JAXBContext.newInstance(Fachtype.class);
         Unmarshaller unmarshaller = jc.createUnmarshaller();
-        Rlp110Type rlp = (Rlp110Type) unmarshaller.unmarshal(new File("src/main/java/net/edusharing/collections/rlp/rlp110.xml"));
-
+        Vector<Fachtype> faecher = new Vector<Fachtype>();
+        for (File file : xmlFiles) {
+			try {
+		        Fachtype fach = (Fachtype) unmarshaller.unmarshal(new File(basePathDataXML+file.getName()));
+            	System.out.println("OK '"+file.getName()+"' --> Found XML for Fach '"+fach.getTitle()+"'");
+            	faecher.add(fach);
+			} catch (Exception e) {
+            	System.out.println("FAIL '"+file.getName()+"' --> NOT A FACH XML");
+            	//e.printStackTrace();
+			}
+		}
+        
+        // check if any results
+        if (faecher.size()==0) {
+        	System.err.println("FAIL - In path '"+basePathDataXML+"' no XML are from type Fach. EXIT");
+        	System.exit(-1);	
+        }
         
         
         /*
          * tranverse curriculum and create collections with sub collections  	
          */
         
-        NodeRef lehrplanCollectionRef = createCollection(null, "Lehrplan Berlin-Brandenburg", null, "Hackathon Prototype by Henry Freye and Christian Rotzoll");
+        NodeRef lehrplanCollectionRef = null;
+        if (lehrplanCollectionId==null) {
+        	System.out.println("CREATING NEW LEHRPLAN COLLECTION");
+        	lehrplanCollectionRef = createCollection(null, "Lehrplan Berlin-Brandenburg", null, "Hackathon Prototype by Henry Freye and Christian Rotzoll");
+        } else {
+        	System.out.println("ADDING TO EXISTING LEHRPLAN COLLECTION");
+        	lehrplanCollectionRef = new NodeRef();
+        	lehrplanCollectionRef.setId(lehrplanCollectionId);
+        	lehrplanCollectionRef.setRepo("-home-");
+        }
         
-        for (Fachtype fach : rlp.getC().getFach()) {
+        int count = 0;
+        for (Fachtype fach : faecher) {
+        	
+        	count++;
         	
         	NodeRef fachCollectionRef = createCollection(lehrplanCollectionRef, fach.getTitle(), fach.getId(), "Fach");
 			if (fachCollectionRef==null) continue;
@@ -80,8 +164,35 @@ public class RLPCollectionImporter {
             		
             }
         	
+        	// also take the 
+        	for (Themainhalttype inhalt : fach.getC3().getThemainhalt()) {
+        		
+        		processThemainhalt(fachCollectionRef, inhalt, 0);
+        		
+        	}
+        	
 		}		
 
+	}
+	
+	private static void processThemainhalt(NodeRef parentRef, Themainhalttype inhalt, int recursiveLevel) {
+		
+		if (recursiveLevel>10) {
+			System.err.println("TOO MUCH Recursion - SAFTY EXIT");
+			System.exit(0);
+		}
+		
+		// concatenate all contents to description
+		String desc = "";
+		for (String cont : inhalt.getContent()) desc += (" " + cont);
+		desc = desc.trim();
+		
+		NodeRef newCollectionRef = createCollection(parentRef, inhalt.getTitle(), inhalt.getId(), desc);
+		
+		for (Themainhalttype subInhalt : inhalt.getInhalt()) {
+			processThemainhalt(newCollectionRef, subInhalt, recursiveLevel+1);
+		}
+		
 	}
 	
 	private static NodeRef createCollection(NodeRef parentRef, String name, String id, String desc) {

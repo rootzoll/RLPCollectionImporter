@@ -6,7 +6,7 @@
 //
 
 
-package net.edusharing.collections.rlp.xml;
+package net.edusharing.collections.rlp.xmlclasses;
 
 import java.util.ArrayList;
 import java.util.List;

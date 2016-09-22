@@ -6,7 +6,7 @@
 //
 
 
-package net.edusharing.collections.rlp.xml;
+package net.edusharing.collections.rlp.xmlclasses;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,19 +17,18 @@ import javax.xml.bind.annotation.XmlType;
 
 
 /**
- * <p>Java class for competenceareatype complex type.
+ * <p>Java class for atype complex type.
  * 
  * <p>The following schema fragment specifies the expected content contained within this class.
  * 
  * <pre>
- * &lt;complexType name="competenceareatype">
+ * &lt;complexType name="atype">
  *   &lt;complexContent>
  *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
  *       &lt;sequence>
  *         &lt;element name="id" type="{http://bsbb.eu}stringtype"/>
- *         &lt;element name="name" type="{http://bsbb.eu}stringtype"/>
- *         &lt;element name="subarea" type="{http://bsbb.eu}competenceareatype" maxOccurs="20" minOccurs="0"/>
- *         &lt;element name="competence" type="{http://bsbb.eu}competencetype" maxOccurs="20" minOccurs="0"/>
+ *         &lt;element name="title" type="{http://bsbb.eu}stringtype"/>
+ *         &lt;element name="kapitel" type="{http://bsbb.eu}textcontent" maxOccurs="4"/>
  *       &lt;/sequence>
  *     &lt;/restriction>
  *   &lt;/complexContent>
@@ -39,20 +38,19 @@ import javax.xml.bind.annotation.XmlType;
  * 
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "competenceareatype", propOrder = {
+@XmlType(name = "atype", propOrder = {
     "id",
-    "name",
-    "subarea",
-    "competence"
+    "title",
+    "kapitel"
 })
-public class Competenceareatype {
+public class Atype {
 
     @XmlElement(required = true)
     protected String id;
     @XmlElement(required = true)
-    protected String name;
-    protected List<Competenceareatype> subarea;
-    protected List<Competencetype> competence;
+    protected String title;
+    @XmlElement(required = true)
+    protected List<Textcontent> kapitel;
 
     /**
      * Gets the value of the id property.
@@ -79,85 +77,56 @@ public class Competenceareatype {
     }
 
     /**
-     * Gets the value of the name property.
+     * Gets the value of the title property.
      * 
      * @return
      *     possible object is
      *     {@link String }
      *     
      */
-    public String getName() {
-        return name;
+    public String getTitle() {
+        return title;
     }
 
     /**
-     * Sets the value of the name property.
+     * Sets the value of the title property.
      * 
      * @param value
      *     allowed object is
      *     {@link String }
      *     
      */
-    public void setName(String value) {
-        this.name = value;
+    public void setTitle(String value) {
+        this.title = value;
     }
 
     /**
-     * Gets the value of the subarea property.
+     * Gets the value of the kapitel property.
      * 
      * <p>
      * This accessor method returns a reference to the live list,
      * not a snapshot. Therefore any modification you make to the
      * returned list will be present inside the JAXB object.
-     * This is why there is not a <CODE>set</CODE> method for the subarea property.
+     * This is why there is not a <CODE>set</CODE> method for the kapitel property.
      * 
      * <p>
      * For example, to add a new item, do as follows:
      * <pre>
-     *    getSubarea().add(newItem);
+     *    getKapitel().add(newItem);
      * </pre>
      * 
      * 
      * <p>
      * Objects of the following type(s) are allowed in the list
-     * {@link Competenceareatype }
+     * {@link Textcontent }
      * 
      * 
      */
-    public List<Competenceareatype> getSubarea() {
-        if (subarea == null) {
-            subarea = new ArrayList<Competenceareatype>();
+    public List<Textcontent> getKapitel() {
+        if (kapitel == null) {
+            kapitel = new ArrayList<Textcontent>();
         }
-        return this.subarea;
-    }
-
-    /**
-     * Gets the value of the competence property.
-     * 
-     * <p>
-     * This accessor method returns a reference to the live list,
-     * not a snapshot. Therefore any modification you make to the
-     * returned list will be present inside the JAXB object.
-     * This is why there is not a <CODE>set</CODE> method for the competence property.
-     * 
-     * <p>
-     * For example, to add a new item, do as follows:
-     * <pre>
-     *    getCompetence().add(newItem);
-     * </pre>
-     * 
-     * 
-     * <p>
-     * Objects of the following type(s) are allowed in the list
-     * {@link Competencetype }
-     * 
-     * 
-     */
-    public List<Competencetype> getCompetence() {
-        if (competence == null) {
-            competence = new ArrayList<Competencetype>();
-        }
-        return this.competence;
+        return this.kapitel;
     }
 
 }
