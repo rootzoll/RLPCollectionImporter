@@ -1,64 +1,84 @@
 package net.edusharing.collections.rlp;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 
-import io.swagger.client.ApiClient;
-import io.swagger.client.ApiException;
-import io.swagger.client.Configuration;
-import io.swagger.client.api.COLLECTIONVApi;
-import io.swagger.client.model.Collection;
-import io.swagger.client.model.CollectionEntry;
-import io.swagger.client.model.NodeRef;
+import org.apache.http.HttpEntity;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.protocol.HTTP;
+import org.apache.http.util.EntityUtils;
+
+import com.google.gson.Gson;
+
+import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.mime.MultipartEntity;
+import org.apache.http.entity.mime.content.FileBody;
+import org.apache.http.entity.mime.content.StringBody;
+
 import net.edusharing.collections.rlp.xmlclasses.Competenceareatype;
 import net.edusharing.collections.rlp.xmlclasses.Competencetype;
 import net.edusharing.collections.rlp.xmlclasses.Fachtype;
 import net.edusharing.collections.rlp.xmlclasses.Standardtype;
 import net.edusharing.collections.rlp.xmlclasses.Stufentype;
-import net.edusharing.collections.rlp.xmlclasses.Textcontent;
 import net.edusharing.collections.rlp.xmlclasses.Themainhalttype;
 
-public class RLPCollectionImporter {
 
-	static ApiClient apiClient;
+@SuppressWarnings("deprecation")
+public class RLPCollectionImporter {	
+		
+	/*
+	 * Configuration
+	 */
 	
-	@SuppressWarnings("unused")
+	// the URL of the edu-sharing repository where to import the data (use HTTPS for production)
+	// for example if you have edu-sharing running local on port 8080
+	// the URL would be http://localhost:8080/edu-sharing/
+	final static String eduSharingApiURL = "http://localhost:8080/edu-sharing/";
+	
+	// the account data
+	final static String username = "admin";
+	final static String password = "admin";
+	
+	// the node id of the root collection under which the other collections should get created
+	// for example a node id looks like this: 116246a6-66b6-4853-b671-2f0af3f9f6aa
+	// you can find the 'id' of the collection node in the URL when browsing edu-sharing
+	final static String lehrplanCollectionId = "";	
+	
+	// set the file from which the extra information should be loaded
+	final static String nameOfExtraDataFile = "berlinbrandenburg.extra.json";
+	
+	/*
+	 * Main Script
+	 */
+		
 	public static void main(String[] args) throws Exception {
 		
-		/*
-		 * Configuration
-		 */
+		// load extra data
+		extraDataMap = loadExtraDataFromFile(nameOfExtraDataFile);
 		
+		// test oAuth / account data
+		if (getAuthToken()==null) {
+			System.err.println("EXIT - not able to get valid oAuth Token - have you set the varibales 'eduSharingApiURL','username' and 'password' correctly?");
+			System.exit(0);
+		}
+				
 		// the file path where the XML data of the RLP is
-		final String basePathDataXML = "src/main/java/net/edusharing/collections/rlp/xmldata2/";
-		
-		// the URL of the edu-sharing repository where to import the data
-		
-		/*
-		final String username = "admin";
-		final String password = "admin";
-		final String eduSharingApiURL = "http://alfresco5.vm:8080/edu-sharing/rest";
-		final String lehrplanCollectionId = null; 
-		*/
-
-		final String username = "admin";
-		final String password = "admin";
-		final String eduSharingApiURL = "http://appserver7.metaventis.com:7117/edu-sharing/rest";
-		final String lehrplanCollectionId = "ab7332e7-c273-4674-a067-189469943889"; 
-		
-		
-		/*
-		 * Init API client
-		 */
-		
-		apiClient = Configuration.getDefaultApiClient();
-		apiClient.setPassword(password);
-		apiClient.setUsername(username);
-		apiClient.setBasePath(eduSharingApiURL);
+		final String basePathDataXML = "src/main/java/net/edusharing/collections/rlp/xmldata/";
 		
 		/*
 		 * load xml data
@@ -105,11 +125,11 @@ public class RLPCollectionImporter {
         for (File file : xmlFiles) {
 			try {
 		        Fachtype fach = (Fachtype) unmarshaller.unmarshal(new File(basePathDataXML+file.getName()));
+		        if ((fach.getTitle()==null) || (fach.getTitle().trim().length()==0)) fach.setTitle(fach.getId());
             	System.out.println("OK '"+file.getName()+"' --> Found XML for Fach '"+fach.getTitle()+"'");
             	faecher.add(fach);
 			} catch (Exception e) {
             	System.out.println("FAIL '"+file.getName()+"' --> NOT A FACH XML");
-            	//e.printStackTrace();
 			}
 		}
         
@@ -123,29 +143,15 @@ public class RLPCollectionImporter {
         /*
          * tranverse curriculum and create collections with sub collections  	
          */
-        
-        NodeRef lehrplanCollectionRef = null;
-        if (lehrplanCollectionId==null) {
-        	System.out.println("CREATING NEW LEHRPLAN COLLECTION");
-        	lehrplanCollectionRef = createCollection(null, "Lehrplan Berlin-Brandenburg", null, "Hackathon Prototype by Henry Freye and Christian Rotzoll");
-        } else {
-        	System.out.println("ADDING TO EXISTING LEHRPLAN COLLECTION");
-        	lehrplanCollectionRef = new NodeRef();
-        	lehrplanCollectionRef.setId(lehrplanCollectionId);
-        	lehrplanCollectionRef.setRepo("-home-");
-        }
-        
-        int count = 0;
+
         for (Fachtype fach : faecher) {
         	
-        	count++;
-        	
-        	NodeRef fachCollectionRef = createCollection(lehrplanCollectionRef, fach.getTitle(), fach.getId(), "Fach");
+        	String fachCollectionRef = createCollection(lehrplanCollectionId, fach.getTitle(), fach.getId(), "Fach");
 			if (fachCollectionRef==null) continue;
         	
         	for (Competenceareatype area : fach.getC2().getArea()) {
         		
-        		NodeRef areaCollectionRef = createCollection(fachCollectionRef, area.getName(), area.getId(), "Kompetenzbereich");
+        		String areaCollectionRef = createCollection(fachCollectionRef, area.getName(), area.getId(), "Kompetenzbereich");
 				if (areaCollectionRef==null) continue;
         		
         		// create direct competences if available
@@ -154,12 +160,12 @@ public class RLPCollectionImporter {
         		// go into sub areas if available
             	if (area.getSubarea()!=null) for (Competenceareatype subarea : area.getSubarea()) {
             		
-            		NodeRef subAreaCollectionRef = createCollection(areaCollectionRef, subarea.getName(), subarea.getId(), "Unterkompetenzbereich");
+            		String subAreaCollectionRef = createCollection(areaCollectionRef, subarea.getName(), subarea.getId(), "Unterkompetenzbereich");
     				if (subAreaCollectionRef==null) continue;
             		
             		// create sub area competences if available
             		processCompetences(subAreaCollectionRef, subarea.getCompetence());
-            		
+           
             	}
             		
             }
@@ -171,11 +177,13 @@ public class RLPCollectionImporter {
         		
         	}
         	
-		}		
+		}	
+        
+        System.out.println("---> DONE "+collectionsCreated+" collections created <----");
 
 	}
 	
-	private static void processThemainhalt(NodeRef parentRef, Themainhalttype inhalt, int recursiveLevel) {
+	private static void processThemainhalt(String parentRef, Themainhalttype inhalt, int recursiveLevel) {
 		
 		if (recursiveLevel>10) {
 			System.err.println("TOO MUCH Recursion - SAFTY EXIT");
@@ -187,70 +195,27 @@ public class RLPCollectionImporter {
 		for (String cont : inhalt.getContent()) desc += (" " + cont);
 		desc = desc.trim();
 		
-		NodeRef newCollectionRef = createCollection(parentRef, inhalt.getTitle(), inhalt.getId(), desc);
+		String newCollectionRef = createCollection(parentRef, inhalt.getTitle(), inhalt.getId(), desc);
 		
 		for (Themainhalttype subInhalt : inhalt.getInhalt()) {
 			processThemainhalt(newCollectionRef, subInhalt, recursiveLevel+1);
 		}
 		
 	}
-	
-	private static NodeRef createCollection(NodeRef parentRef, String name, String id, String desc) {
-
-		// if a name is not set - dont make an extra collection
-		if ((name==null) || (name.trim().length()==0)) return parentRef;
-				
-		// create full description
-		String description = "";
-		if (id!=null) description += "("+id+") ";
-		if (desc!=null) description += desc;
 		
-		// set data on collection
-		Collection col = new Collection();
-		col.setTitle(name);
-		col.setDescription(description);
-		
-		// try to create collection
-		try{
-			
-			// courtesy delay
-			try {
-				Thread.sleep(250);
-			} catch (Exception e) {}
-			
-			String repo = "-home-";
-			String nodeId = "-root-";
-			
-			if (parentRef!=null) nodeId = parentRef.getId();
-
-			System.out.println("**** created *******************************");
-			System.out.println("COLLECTION '"+name+"'"); 
-			System.out.println(description); 
-			
-			CollectionEntry entry = new COLLECTIONVApi(apiClient).createCollection(repo, nodeId ,col);
-			
-			return entry.getCollection().getRef();
-			
-		}catch(ApiException e){
-			e.printStackTrace();
-			return null;
-		}
-		
-	}
-	
-	private static void processCompetences(NodeRef parent, List<Competencetype> list) {
+	private static void processCompetences(String parent, List<Competencetype> list) {
 		
 		if ((list!=null) && (list.size()>0)) {
 			
 			for (Competencetype competence : list) {
 				
-				NodeRef competenceCollectionRef =  createCollection(parent, competence.getName(), competence.getId(), "Kompetenz");
+				String competenceCollectionRef =  createCollection(parent, competence.getName(), competence.getId(), "Kompetenz");
 				if (competenceCollectionRef==null) continue;
 				
 				for (Stufentype stufe : competence.getStufe()) {
 					
 					String stufenDescription = getDescription(stufe.getLevel());
-					NodeRef stufenCollectionRef = createCollection(competenceCollectionRef, stufe.getLevel(), stufe.getId(), stufenDescription);
+					String stufenCollectionRef = createCollection(competenceCollectionRef, stufe.getLevel(), stufe.getId(), stufenDescription);
 					if (stufenCollectionRef==null) continue;
 					
 					int number = 0;
@@ -270,7 +235,7 @@ public class RLPCollectionImporter {
 	}
 	
 	/*
-     * Beschreibungstexte für die Stufen
+     * preset description texts for the different levels
      */
     private static String getDescription (String level){
     	String descr = "";
@@ -300,5 +265,279 @@ public class RLPCollectionImporter {
     	}
     	return descr;   	
     }
+        
+    /*
+     * API CALLS
+     * calling the edu-sharing API
+     */
+    
+    static int collectionsCreated = 0;
+    
+    // create collection
+	private static String createCollection(String nodeId, String name, String id, String desc) {
 
+		String newCollectionId = null;
+		
+		// if a name is not set - dont make an extra collection
+		if ((name==null) || (name.trim().length()==0)) return nodeId;
+				
+		// create full description
+		String description = "";
+		if (id!=null) description += "("+id+") ";
+		if (desc!=null) description += desc;
+	
+		// clean uop name
+		name = name.replaceAll("[\\p{Cntrl}&&[^\r\n\t]]", "");
+		name = name.replace(':', ' ').replace('"', '\'');
+		name = name.replace((char)10, ' ').replace((char)13, ' ').replace((char)9, ' ').replace("  ", " ").trim();
+
+		// clean up description
+		description = description.replaceAll("[\\p{Cntrl}&&[^\r\n\t]]", "");
+		description = description.replace('"', '\'');
+		description = description.replace((char)10, ' ').replace((char)13, ' ').replace((char)9, ' ').replace("  ", " ").trim();
+	
+		// check if there is extra data for this collection
+		File imageFile = null;
+		String color = "#759CB7"; // default
+		if (extraDataMap.containsKey(id.toUpperCase())) {
+			ExtraData extraData = extraDataMap.get(id.toUpperCase());
+			
+			// set color
+			if (extraData.color!=null) color = extraData.color;
+			
+			// set file image
+			if (extraData.image!=null) {
+				imageFile = new File("./collectionData/"+extraData.image);
+				if (!imageFile.exists()) {
+					System.err.println("WAS NOT ABLE TO FIND EXTRA DATA IMAGE '"+extraData.image+"' --> ("+imageFile.getAbsolutePath()+")");
+					System.out.println("\007");
+					System.out.flush();
+					try { Thread.sleep(10000); } catch (Exception e) {}
+					imageFile = null;
+				}
+			}
+		}	
+		
+		// try to create collection
+		try{
+			
+			// courtesy delay to not overload the API
+			try {
+				Thread.sleep(250);
+			} catch (Exception e) {}
+			
+			System.out.println("");
+			System.out.println("**** create collection on parent nodeId("+nodeId+") *******");
+			
+			String jsonStr = "{ \"title\":\""+name+"\", \"description\":\""+description+"\",\"color\":\""+color+"\",\"type\":\"default\", \"scope\":\"EDU_ALL\" }";
+	    	System.out.println(jsonStr);
+		
+	    	String url = eduSharingApiURL+"rest/collection/v1/collections/-home-/"+nodeId+"/children";
+	    	System.out.println("URL --> "+url);
+	    	
+	    	CloseableHttpClient httpclient = HttpClients.createDefault();
+	    	HttpPost httpPost = new HttpPost(url);
+	    	httpPost.addHeader("Content-Type", "application/json; charset=utf-8");
+	    	httpPost.addHeader("Authorization","Bearer " + getAuthToken());
+	    	httpPost.addHeader("Accept", "application/json");
+	    	httpPost.setEntity(new StringEntity(jsonStr,  HTTP.UTF_8));
+	    	CloseableHttpResponse response1 = httpclient.execute(httpPost);
+			
+	    	try {
+	    		
+	    		// get data from HTTP request
+	    	    System.out.println("HTTP response --> "+response1.getStatusLine());
+	    	    HttpEntity entity1 = response1.getEntity();
+	    	    String data = convertStreamToString(entity1.getContent());
+	    	    EntityUtils.consume(entity1);
+	    	    
+	    	    // check if HTTP API worked
+	    	    if (!response1.getStatusLine().toString().startsWith("HTTP/1.1 200")) {
+	    	    	System.err.println("HTTP REQUEST FAILED: "+response1.getStatusLine()+" / "+data);
+	    	    	if (response1.getStatusLine().toString().startsWith("HTTP/1.1 404")) {
+		    	    	System.err.println("Have you set the variable 'lehrplanCollectionId' correctly?");
+		    	    	System.exit(0);
+	    	    	} else {
+	    	    		throw new Exception("HTTP REQUEST FAILED: "+response1.getStatusLine()+" / "+data);
+	    	    	}
+	    	    }
+	    	    
+	    	    // get collection id from response
+		    	int start = data.indexOf("id\":\"") + 5;
+		    	if (start<=5) throw new Exception("ID BEGIN not found in response: "+data);
+		    	int end = data.indexOf('"',start+1);
+		    	if (end<=0) throw new Exception("ID END not found in response: "+data);;
+		    	newCollectionId = data.substring(start, end);	    
+		    	System.out.println("OK new CollectionID --> "+newCollectionId);
+		    	collectionsCreated++;
+		    	   	    	    
+		    	// add image to collection if set
+		    	if (imageFile!=null) {
+		    		addImageToCollection(newCollectionId, imageFile);
+		    	}
+	    	    
+	    	} finally {
+	    	    response1.close();
+	    	}   	
+	    	
+		}catch(Exception e){
+			e.printStackTrace();
+			return null;
+		}
+	
+		
+		return newCollectionId;
+		
+	}
+	
+	// upload an image as icon to a collection
+	private static boolean addImageToCollection(String collectionId, File imageFile) {
+		
+		boolean result = false;
+		
+		try{
+		
+		System.out.println("**** upload image *******************************");
+		
+    	String url = eduSharingApiURL+"rest/collection/v1/collections/-home-/"+collectionId+"/icon?mimetype=image%2Fpng";
+    	CloseableHttpClient httpclient = HttpClients.createDefault();
+    	HttpPost httpPost = new HttpPost(url);
+    	//httpPost.addHeader("Content-Type", "application/json");
+    	httpPost.addHeader("Authorization","Bearer " + getAuthToken());
+    	httpPost.addHeader("Accept", "application/json");
+    
+		MultipartEntity reqEntity = new MultipartEntity();
+    	reqEntity.addPart("filename", new StringBody(""));
+    	reqEntity.addPart("file", new FileBody(imageFile));
+
+    	httpPost.setEntity(reqEntity);
+    	CloseableHttpResponse response1 = httpclient.execute(httpPost);
+		
+    	try {
+    	    System.out.println(response1.getStatusLine());
+    	    result = true;
+    	    HttpEntity entity1 = response1.getEntity();
+    	    String data = convertStreamToString(entity1.getContent());
+    	    System.out.println(data);
+    	    EntityUtils.consume(entity1);
+    	} finally {
+    	    response1.close();
+    	}   	
+    	
+	} catch(Exception e){
+		e.printStackTrace();
+	}
+
+		return result;
+	}
+	
+    static String convertStreamToString(java.io.InputStream is) throws Exception {
+        @SuppressWarnings("resource")
+		java.util.Scanner s = new java.util.Scanner(is).useDelimiter("\\A");
+        return s.hasNext() ? s.next() : "";
+    }    
+	
+	/*
+	 * OAUTH - Quick Hack
+	 * every 1 minute make fresh oAuth login and get token 
+	 */ 
+	
+	static String oAuthToken = null;
+	static Long   oAuthLastRefresh = 0l;
+    
+    private static String getAuthToken() {
+    	
+    	// if last login is still valid
+    	long milliSecsSinceLast = System.currentTimeMillis()-oAuthLastRefresh;
+    	System.out.println("milliSecsSinceLast oAuth("+milliSecsSinceLast+")");
+    	if ( (oAuthToken!=null) && (milliSecsSinceLast<60000l) ) {
+    		return oAuthToken;
+    	}
+    	
+    	// get fresh oAuth token (ignore refresh token)
+    	try {
+    		
+    		String url = eduSharingApiURL+"oauth2/token";
+    		System.out.println("**** GET fresh OAUTH TOKEN from "+url);
+    		CloseableHttpClient httpclient = HttpClients.createDefault();
+    		HttpPost httpPost = new HttpPost(url);
+    		httpPost.addHeader("Content-Type", "application/x-www-form-urlencoded");
+    		httpPost.addHeader("Accept", "*/*");
+    		List <NameValuePair> nvps = new ArrayList <NameValuePair>();
+    		nvps.add(new BasicNameValuePair("grant_type", "password"));
+    		nvps.add(new BasicNameValuePair("client_id", "eduApp"));
+    		nvps.add(new BasicNameValuePair("client_secret", "secret"));
+    		nvps.add(new BasicNameValuePair("username", username));
+    		nvps.add(new BasicNameValuePair("password", password));
+    		httpPost.setEntity(new UrlEncodedFormEntity(nvps));
+    		CloseableHttpResponse response1 = httpclient.execute(httpPost);
+    		try {
+    			System.out.println(response1.getStatusLine());
+    			HttpEntity entity1 = response1.getEntity();
+    			String data = convertStreamToString(entity1.getContent());
+    			System.out.println(data);
+    			int start = data.indexOf("access_token\":\"") + 15;
+    			if (start<=0) return null;
+    			int end = data.indexOf('"',start+1);
+    			if (end<=0) return null;
+    			oAuthToken = data.substring(start, end);
+    			oAuthLastRefresh = System.currentTimeMillis();
+    			System.out.println("*** GOT FRESH oAuth TOKEN ----> "+oAuthToken);
+    			EntityUtils.consume(entity1);
+    		} finally {
+    			response1.close();
+    		}
+    	
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    	}
+    	
+    	return oAuthToken;
+    }  
+	
+	/*
+	 * EXTRA DATA 
+	 * handle the extra data like image and color for the collections to be crteated
+	 */
+
+	static Map<String,ExtraData> extraDataMap = null;
+	static final Gson gson = new Gson();
+	
+	// tool method to load file as string
+	static String readFile(String path) {
+		try {
+			byte[] encoded = Files.readAllBytes(Paths.get(path));
+			return new String(encoded, "UTF-8");
+		} catch (Exception e) {
+			System.err.println("FAILED TO LOAD "+path+" --> EXIT");
+			e.printStackTrace();
+			System.exit(0);
+			return null;
+		}	
+	}
+	
+	// one line in extra data file - add here fields if you extend it
+	public class ExtraData {
+		String id;
+		String image;
+		String color;
+	}
+		
+	// loads extra data JSON file and maps it into a hash map
+	public static Map<String,ExtraData> loadExtraDataFromFile(String filename) {
+		
+		// read file
+		String extraData = readFile("./collectionData/"+filename);
+		
+		// convert JSON string to objects and fill up map  
+		@SuppressWarnings("rawtypes")
+		List data = gson.fromJson(extraData, List.class);
+		Map<String,ExtraData> result = new HashMap<String,ExtraData>();
+		for (Object entry : data) {
+			ExtraData item = gson.fromJson(gson.toJson(entry),ExtraData.class);
+			result.put(item.id.toUpperCase(), item);
+		}
+		return result;
+	}
+	
 }

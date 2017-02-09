@@ -124,13 +124,23 @@
       <artifactId>joda-time</artifactId>
       <version>${jodatime-version}</version>
     </dependency>
-
+    
     <!-- test dependencies -->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>${junit-version}</version>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+    	<groupId>org.apache.httpcomponents</groupId>
+    	<artifactId>httpclient</artifactId>
+    	<version>4.5.2</version>
+    </dependency>
+    <dependency>
+    	<groupId>org.apache.httpcomponents</groupId>
+    	<artifactId>httpmime</artifactId>
+    	<version>4.5.2</version>
     </dependency>
   </dependencies>
   <properties>
